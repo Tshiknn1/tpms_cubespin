@@ -3,7 +3,7 @@
 out vec4 FragColor;
 
 #define MAX_DISTANCE sqrt(3)
-#define MAX_DEPTH 128
+#define MAX_DEPTH 64
 
 #define AMBIENT 0.2f
 #define LIGHT_SCALE 0.8f
@@ -11,7 +11,7 @@ out vec4 FragColor;
 
 #define SCALE_P p = freq * 2 * 3.1415926535897932 * p
 
-#define GYROID
+#define SPLIT_P
 
 in vec3 rayDirection;
 
@@ -86,6 +86,47 @@ float f(vec3 p) {
 vec3 df(vec3 p) {
     SCALE_P;
     return vec3(-sin(p.x), -sin(p.y), -sin(p.z));
+}
+#endif
+
+#ifdef SPLIT_P
+float f(vec3 p) {
+    SCALE_P;
+    return 1.1 * sin(2 * p.x) * sin(p.z) * cos(p.y)
+        + 1.1 * sin(2 * p.y) * sin(p.x) * cos(p.z)
+        + 1.1 * sin(2 * p.z) * sin(p.y) * cos(p.x)
+        - 0.2 * cos(2 * p.x) * cos(2 * p.y)
+        - 0.2 * cos(2 * p.y) * cos(2 * p.z)
+        - 0.2 * cos(2 * p.z) * cos(2 * p.x)
+        - 0.4 * cos(p.x)
+        - 0.4 * cos(p.y)
+        - 0.4 * cos(p.z);
+}
+
+vec3 df(vec3 p) {
+    SCALE_P;
+    return vec3(
+        2.2 * cos(2 * p.x) * sin(p.z) * cos(p.y)
+            + 1.1 * sin(2 * p.y) * cos(p.x) * cos(p.z)
+            - 1.1 * sin(2 * p.z) * sin(p.y) * sin(p.x)
+            + 0.4 * sin(2 * p.x) * cos(2 * p.y)
+            + 0.4 * cos(2 * p.z) * sin(2 * p.x)
+            + 0.4 * sin(p.x),
+
+        -1.1 * sin(2 * p.x) * sin(p.z) * sin(p.y)
+            + 2.2 * cos(2 * p.y) * sin(p.x) * cos(p.z)
+            + 1.1 * sin(2 * p.z) * cos(p.y) * sin(p.x)
+            + 0.4 * cos(2 * p.x) * sin(2 * p.y)
+            + 0.4 * sin(2 * p.y) * cos(2 * p.z)
+            + 0.4 * sin(p.y),
+
+        1.1 * sin(2 * p.x) * cos(p.z) * cos(p.y)
+            - 1.1 * sin(2 * p.y) * sin(p.x) * sin(p.z)
+            + 2.2 * cos(2 * p.z) * sin(p.y) * cos(p.x)
+            + 0.4 * cos(2 * p.y) * sin(2 * p.z)
+            + 0.4 * sin(2 * p.z) * cos(2 * p.x)
+            + 0.4 * sin(p.z)
+    );
 }
 #endif
 
