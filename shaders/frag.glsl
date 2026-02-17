@@ -9,10 +9,10 @@ out vec4 FragColor;
 #define LIGHT_SCALE 0.8f
 #define FREQ_SCALE 0.5f
 
-#define DIAMOND
+#define SCALE_P p = freq * 2 * 3.1415926535897932 * p
 
-//in vec3 ourColor;
-//in vec2 TexCoord;
+#define GYROID
+
 in vec3 rayDirection;
 
 uniform sampler2D ourTexture;
@@ -32,13 +32,13 @@ struct fresult {
 #ifdef GYROID
 // gyroid tpms
 float f(vec3 p) {
-    p = freq * 2 * 3.1415926535897932 * p;
+    SCALE_P;
     return cos(p.x) * sin(p.y) + cos(p.y) * sin(p.z) + cos(p.z) * sin(p.x);
 }
 
 // gyroid surface normal (surface gradient)
 vec3 df(vec3 p) {
-    p = freq * 2 * 3.1415926535897932 * p;
+    SCALE_P;
     return vec3(
         -sin(p.x) * sin(p.y) + cos(p.z) * cos(p.x),
         cos(p.x) * cos(p.y) - sin(p.y) * sin(p.z),
@@ -48,9 +48,9 @@ vec3 df(vec3 p) {
 #endif
 
 #ifdef DIAMOND
-// diamond
+// diamond definition
 float f(vec3 p) {
-    p = freq * 2 * 3.1415926535897932 * p;
+    SCALE_P;
     return sin(p.x) * sin(p.y) * sin(p.z)
         + sin(p.x) * cos(p.y) * cos(p.z)
         + cos(p.x) * sin(p.y) * cos(p.z)
@@ -59,7 +59,7 @@ float f(vec3 p) {
 
 // diamond surface normal
 vec3 df(vec3 p) {
-    p = freq * 2 * 3.1415926535897932 * p;
+    SCALE_P;
     return vec3(
         cos(p.x) * sin(p.y) * sin(p.z)
             + cos(p.x) * cos(p.y) * cos(p.z)
@@ -79,78 +79,15 @@ vec3 df(vec3 p) {
 
 #ifdef SCHWARZ_P
 float f(vec3 p) {
-    p = freq * 2 * 3.1415926535897932 * p;
+    SCALE_P;
     return cos(p.x) + cos(p.y) + cos(p.z);
 }
 
 vec3 df(vec3 p) {
-    p = freq * 2 * 3.1415926535897932 * p;
+    SCALE_P;
     return vec3(-sin(p.x), -sin(p.y), -sin(p.z));
 }
 #endif
-
-//fresult solve_f(vec3 direction, vec4 startPos)
-//{
-//    fresult r;
-//    r.solutionFound = false;
-//
-//    vec3 ro = startPos.xyz;
-//    vec3 rd = normalize(direction); // important
-//
-//    float tEnter, tExit;
-//    if (!rayBox(ro, rd, vec3(-0.5), vec3(0.5), tEnter, tExit))
-//        return r;
-//
-//    // start just inside the box to avoid immediate "outside" due to precision
-//    const float EPS_IN = 1e-4;
-//    float t = max(tEnter, 0.0) + EPS_IN;
-//
-//    float delta = 0.002; // consider scaling with (tExit - tEnter) / N
-//
-//    float prevF = 0.0;
-//    bool first = true;
-//
-//    vec3 prevPos = ro + rd * t;
-//    vec3 currPos = prevPos;
-//
-//    while (t <= tExit)
-//    {
-//        currPos = ro + rd * t;
-//
-//        float newF = f(currPos);
-//
-//        if (!first)
-//        {
-//            if (prevF == 0.0) {
-//                r.solutionFound = true;
-//                r.solution = prevPos;
-//                return r;
-//            }
-//            if (prevF * newF < 0.0)
-//            {
-//                // bisection between prevPos (t-delta) and currPos (t)
-//                float a = t - delta, b = t;
-//                for (int i = 0; i < MAX_DEPTH; i++) {
-//                    float m = 0.5 * (a + b);
-//                    float fa = f(ro + rd * a);
-//                    float fm = f(ro + rd * m);
-//                    if (fa * fm < 0.0) b = m; else a = m;
-//                }
-//                r.solution = ro + rd * (0.5 * (a + b));
-//                r.increasing = dot(df(r.solution), rd) > 0.0;
-//                r.solutionFound = true;
-//                return r;
-//            }
-//        }
-//
-//        first = false;
-//        prevF = newF;
-//        prevPos = currPos;
-//        t += delta;
-//    }
-//
-//    return r;
-//}
 
 fresult solve_f(vec3 direction, vec4 startPos) {
     float d = 0.f;
@@ -165,8 +102,6 @@ fresult solve_f(vec3 direction, vec4 startPos) {
 
     fresult r;
     r.solutionFound = false;
-
-    //float maxDistance = calcMaxDistance(direction, startPos);
 
     const float EPS = 0.0001;
 
@@ -208,6 +143,7 @@ fresult solve_f(vec3 direction, vec4 startPos) {
             }
         }
 
+        // march along ray (note that this step may fail for very fine geometries)
         d += delta;
         prevPos = currPos;
         currPos += direction * delta;
@@ -221,6 +157,7 @@ void main() {
     vec4 fragPosModel = transInv * fragPosView;
     vec3 dirModel = normalize((transInv * vec4(rayDirection, 0.0)).xyz);
 
+    // "fill in" half the volume by drawing a flat surface
     if (f(fragPosModel.xyz) > 0.f) {
         vec3 lightDirection = normalize(fragPosModel.xyz - lightPos.xyz);
         vec3 normal = cross(dFdx(fragPosView.xyz), dFdy(fragPosView.xyz));
@@ -229,13 +166,16 @@ void main() {
         lightMag = lightMag * lightMag;
         float lightVal = AMBIENT + LIGHT_SCALE * lightMag;
         FragColor = vec4(lightVal, 0.f, 0.f, 1.f);
-    } else {
+    }
+    // for the rest, raytrace to surface
+    else {
         fresult solution = solve_f(dirModel, fragPosModel);
 
+        // draw a hole
         if (!solution.solutionFound) {
             FragColor = vec4(0.2f, 0.3f, 0.3f, 1.0f);
-            //FragColor = vec4(0.f, 0.f, 0.f, 1.f);
         }
+        // draw the surface
         else {
             vec3 lightDirection = normalize(lightPos.xyz - solution.solution);
             vec3 normal = df(solution.solution);
@@ -243,19 +183,6 @@ void main() {
             lightMag = lightMag * lightMag;
             float lightVal = AMBIENT + LIGHT_SCALE * lightMag;
             FragColor = vec4(0.f, 0.f, lightVal, 1.f);
-            //if (solution.increasing) {
-            //    FragColor = vec4(0.f, 0.f, lightVal, 1.f);
-            //} else {
-            //    FragColor = vec4(lightVal, 0.f, 0.f, 1.f);
-            //}
         }
-        //if (!solution.increasing) {
-        //    float lightVal = AMBIENT + LIGHT_SCALE * lightMag;
-        //    FragColor = vec4(0.f, 0.f, lightVal, 1.f);
-        //} else {
-        //    float lightVal = AMBIENT + LIGHT_SCALE * (lightMag);
-        //    FragColor = vec4(lightVal, 0.f, 0.f, 1.f);
-        //}
-        //FragColor = vec4(0.f, 0.f, lightVal, 1.f);
     }
 }
