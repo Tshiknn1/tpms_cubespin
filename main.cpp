@@ -194,26 +194,26 @@ int main(int argc, const char** argv) {
     glBindVertexArray(0);
 
     // generate texture containers
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    //unsigned int texture;
+    //glGenTextures(1, &texture);
+    //glBindTexture(GL_TEXTURE_2D, texture);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // load image
-    int width, height, nrChannels;
-    unsigned char* data = stbi_load("raphtalia-wallpaper.jpg", &width, &height, &nrChannels, 0);
-    if (!data) {
-        fprintf(stderr, "couldn't load image...");
-        exit(-1);
-    }
+    //int width, height, nrChannels;
+    //unsigned char* data = stbi_load("raphtalia-wallpaper.jpg", &width, &height, &nrChannels, 0);
+    //if (!data) {
+    //    fprintf(stderr, "couldn't load image...");
+    //    exit(-1);
+    //}
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    //glGenerateMipmap(GL_TEXTURE_2D);
 
-    stbi_image_free(data);
+    //stbi_image_free(data);
 
     // create model matrix
     glm::mat4 model = glm::mat4(1.0f);
@@ -277,7 +277,7 @@ int main(int argc, const char** argv) {
         glUniform4fv(lightPosLoc, 1, glm::value_ptr(lightPos));
         glUniform1f(freqLoc, freqScale);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        //glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(vao);
 //        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 //        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
