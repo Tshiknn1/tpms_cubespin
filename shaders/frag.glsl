@@ -25,7 +25,6 @@ in vec4 fragPosView;
 
 struct fresult {
     vec3 solution;
-    bool increasing;
     bool solutionFound;
 };
 
@@ -78,11 +77,13 @@ vec3 df(vec3 p) {
 #endif
 
 #ifdef SCHWARZ_P
+// schwarz-p surface definition
 float f(vec3 p) {
     SCALE_P;
     return cos(p.x) + cos(p.y) + cos(p.z);
 }
 
+// schwarz-p normal
 vec3 df(vec3 p) {
     SCALE_P;
     return vec3(-sin(p.x), -sin(p.y), -sin(p.z));
@@ -90,6 +91,7 @@ vec3 df(vec3 p) {
 #endif
 
 #ifdef SPLIT_P
+// split-p surface definition
 float f(vec3 p) {
     SCALE_P;
     return 1.1 * sin(2 * p.x) * sin(p.z) * cos(p.y)
@@ -103,6 +105,7 @@ float f(vec3 p) {
         - 0.4 * cos(p.z);
 }
 
+// split-p normal
 vec3 df(vec3 p) {
     SCALE_P;
     return vec3(
@@ -146,6 +149,8 @@ fresult solve_f(vec3 direction, vec4 startPos) {
 
     const float EPS = 0.0001;
 
+    // march along ray with cap at sqrt(3)
+    // (though this should be redundant, good to have a guaranteed loop exit...)
     while (d < sqrt(3)) {
         if (abs(currPos.x) - 0.5f > EPS ||
                 abs(currPos.y) - 0.5f > EPS ||
@@ -156,10 +161,11 @@ fresult solve_f(vec3 direction, vec4 startPos) {
         newF = f(currPos);
 
         if (firstIter) {
+            // bail out of first iteration since we don't have two solutions to compare
             firstIter = false;
         } else {
             if (prevF * newF < 0.f) {
-                // chatgpt-esque solution...
+                // bisection algo (debugging insp. chatgpt)
                 vec3 left = prevPos;
                 vec3 right = currPos;
 
@@ -172,13 +178,8 @@ fresult solve_f(vec3 direction, vec4 startPos) {
                     }
                 }
 
-                r.solution = left;
-
-                // chatgpt solution
-                float slope = dot(df(r.solution), direction);
-                r.increasing = slope > 0.0;
-
                 // say we found a solution
+                r.solution = left;
                 r.solutionFound = true;
                 return r;
             }
