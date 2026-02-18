@@ -4,7 +4,7 @@ This is a small demo project that performs ray-tracing on an analytically define
 
 The root-finding algorithm is likely quite suboptimal, but it is good enough for a fairly rough render. The shader also finds the normal of the surface at the root and uses that for lighting.
 
-Currently it supports the following gyroids. To switch between gyroids, define a preprocessor constant with the corresponding name:
+Currently it supports the following gyroids. To switch between gyroids, define a SINGLE preprocessor constant in shaders/frag.glsl with the corresponding name:
 
 - GYROID
 - DIAMOND
